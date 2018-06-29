@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from qgis.core import QGis, QgsVectorLayer, QgsVectorLayer, QgsMapLayerRegistry, QgsFeature, QgsField, QgsGeometry, QGis, QgsSimpleMarkerSymbolLayerV2, QgsLineSymbolV2, QgsMarkerSymbolV2, QgsMarkerLineSymbolLayerV2, QgsSimpleMarkerSymbolLayerBase, QgsSingleSymbolRendererV2
+from qgis.core import QGis, QgsVectorLayer, QgsVectorLayer, QgsMapLayerRegistry, QgsFeature, QgsField, QgsGeometry, QGis, QgsSimpleMarkerSymbolLayerV2, QgsLineSymbolV2, QgsMarkerSymbolV2, QgsMarkerLineSymbolLayerV2, QgsSimpleMarkerSymbolLayerBase, QgsSingleSymbolRendererV2,QgsAbstractGeometryV2
 from PyQt4.QtGui import QIcon, QAction, QColor
 from PyQt4.QtCore import QObject, SIGNAL, QVariant
 from PyQt4.QtSql import QSqlDatabase, QSqlQuery
@@ -44,9 +44,9 @@ class StartNotSimple:
 
         layer = self.iface.activeLayer() 
 
-        if not layer:
-            self.iface.messageBar().pushMessage("Erro", u"Esperando uma Active Layer!", level=QgsMessageBar.CRITICAL, duration=4)
-            return
+        # if not layer:
+        #     self.iface.messageBar().pushMessage("Erro", u"Esperando uma Active Layer!", level=QgsMessageBar.CRITICAL, duration=4)
+        #     return
         if layer.featureCount() == 0:
             self.iface.messageBar().pushMessage("Erro", u"a camada não possui feições!", level=QgsMessageBar.CRITICAL, duration=4)
             return
@@ -145,7 +145,7 @@ class StartNotSimple:
             lista_fid.append(str(f.id())) # Guarda na lista. A lista de Feature ids passa tipo "int", foi convertido e guardado como "str".
 
         source = layer.source().split(" ")
-        self.tableName = "" # Inicia vazio
+        self.tableName = " " # Inicia vazio
         layerExistsInDB = False
         
         for i in source:
@@ -159,40 +159,40 @@ class StartNotSimple:
         if layerExistsInDB == False:
             self.iface.messageBar().pushMessage("Erro", u"Provedor da camada corrente não provem do banco de dados!", level=QgsMessageBar.CRITICAL, duration=4)
             return
-        
-        # Busca através do SQL 
 
-        # self.tableSchema = 'edgv'
-        # self.geometryColumn = 'geom'
-        # self.keyColumn = 'id'
+        ##############################
+        #### Busca através do SQL ####
+        ##############################
+           
 
-        # def getNotSimple(self, tableSchema, tableName, geometryColumn, keyColumn):
-        # sql = """select foo."{3}" as "{3}", ST_MULTI(st_startpoint(foo."{2}")) as "{2}" from (
-        # select "{3}" as "{3}", (ST_Dump(ST_Node(ST_SetSRID(ST_MakeValid("{2}"),ST_SRID("{2}"))))).geom as "{2}" from "{0}"."{1}"  
-        # where ST_IsSimple("{2}") = 'f') as foo where st_equals(st_startpoint(foo."{2}"),st_endpoint(foo."{2}"))""".format(tableSchema, tableName, geometryColumn, keyColumn)
-        # return sql
+        # query_string  = '''select distinct (reason(ST_IsValidDetail(f."{2}",0))) AS motivo, '''
+        # query_string += '''ST_AsText(ST_Multi(ST_SetSrid(location(ST_IsValidDetail(f."{2}",0)), ST_Srid(f.{2})))) as local from '''
+        # query_string += '''(select "{3}", "{2}" from only "{0}"."{1}"  where ST_IsSimple("{2}") = 'f' and {3} in ({4})) as f where st_equals(st_startpoint(foo."{2}"),st_endpoint(foo."{2}"))''' 
+        # query_string  = query_string.format(self.tableSchema, self.tableName, self.geometryColumn, self.keyColumn, ",".join(lista_fid))
 
-        sql = '''select foo."{3}" as "{3}", ST_MULTI(st_startpoint(foo."{2}")) as "{2}" from (
-        select "{3}" as "{3}", (ST_Dump(ST_Node(ST_SetSRID(ST_MakeValid("{2}"),ST_SRID("{2}"))))).geom as "{2}" from "{0}"."{1}"       
-        where ST_IsSimple("{2}") = 'f') as foo where st_equals(st_startpoint(foo."{2}"),st_endpoint(foo."{2}"))'''.format(self.tableSchema, self.tableName, self.geometryColumn, self.keyColumn, ",".join(lista_fid))
-                                                                                                                                # {0}              {1}           {2}               {3}                {4}
+        sql = """select foo."{3}" as "{3}", ST_AsText(ST_MULTI(st_startpoint(foo."{2}"))) as "{2}" from (
+        select "{3}" as "{3}", (ST_Dump(ST_Node(ST_SetSRID(ST_MakeValid("{2}"),ST_SRID("{2}"))))).geom as "{2}" from "{0}"."{1}"  
+        where ST_IsSimple("{2}") = 'f' and {3} in ({4})) as foo where st_equals(st_startpoint(foo."{2}"),st_endpoint(foo."{2}"))""".format(self.tableSchema, self.tableName, self.geometryColumn, self.keyColumn, ",".join(lista_fid))
+            
         query = QSqlQuery(sql)
-        
+
         self.flagsLayer.startEditing()
         flagCount = 0 # iniciando contador que será referência para os IDs da camada de memória.
 
         listaFeatures = []
         while query.next():
-            motivo = query.value(0)
-            local = query.value(1)
+            motivo = query.value(1) # recebendo valores buscados no sql
+            local = query.value(0) # recebendo valores buscados no sql
+            print motivo
+            print local
             flagId = flagCount
 
             flagFeat = QgsFeature()
             flagGeom = QgsGeometry.fromWkt(local) # passa o local onde foi localizado o erro.
             flagFeat.setGeometry(flagGeom)
             flagFeat.initAttributes(2)
-            flagFeat.setAttribute(0,flagId) # insere o id definido para a coluna 0 da layer de memória.
-            flagFeat.setAttribute(1, motivo) # insere o motivo/razão pré-definida para a coluna 1 da layer de memória.
+            flagFeat.setAttribute(1,flagId) # insere o id definido para a coluna 0 da layer de memória.
+            flagFeat.setAttribute(0, motivo) # insere o motivo/razão pré-definida para a coluna 1 da layer de memória.
 
             listaFeatures.append(flagFeat)    
 
