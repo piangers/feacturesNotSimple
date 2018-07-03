@@ -163,12 +163,7 @@ class StartNotSimple:
         ##############################
         #### Busca através do SQL ####
         ##############################
-           
 
-        # query_string  = '''select distinct (reason(ST_IsValidDetail(f."{2}",0))) AS motivo, '''
-        # query_string += '''ST_AsText(ST_Multi(ST_SetSrid(location(ST_IsValidDetail(f."{2}",0)), ST_Srid(f.{2})))) as local from '''
-        # query_string += '''(select "{3}", "{2}" from only "{0}"."{1}"  where ST_IsSimple("{2}") = 'f' and {3} in ({4})) as f where st_equals(st_startpoint(foo."{2}"),st_endpoint(foo."{2}"))''' 
-        # query_string  = query_string.format(self.tableSchema, self.tableName, self.geometryColumn, self.keyColumn, ",".join(lista_fid))
 
         sql = """select foo."{3}" as "{3}", ST_AsText(ST_MULTI(st_startpoint(foo."{2}"))) as "{2}" from (
         select "{3}" as "{3}", (ST_Dump(ST_Node(ST_SetSRID(ST_MakeValid("{2}"),ST_SRID("{2}"))))).geom as "{2}" from "{0}"."{1}"  
@@ -190,7 +185,7 @@ class StartNotSimple:
             flagFeat = QgsFeature()
             flagGeom = QgsGeometry.fromWkt(local) # passa o local onde foi localizado o erro.
             flagFeat.setGeometry(flagGeom)
-            flagFeat.initAttributes(2)
+            #flagFeat.initAttributes(2)
             flagFeat.setAttribute(0, flagId) # insere o id definido para a coluna 0 da layer de memória.
             flagFeat.setAttribute(1, id) # insere o id da geometria para a coluna 1 da layer de memória.
 
