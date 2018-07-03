@@ -132,7 +132,7 @@ class StartNotSimple:
 
             self.flagsLayer = QgsVectorLayer(tempString, flagsLayerName, "memory")
             self.flagsLayerProvider = self.flagsLayer.dataProvider()
-            self.flagsLayerProvider.addAttributes([QgsField("id", QVariant.Int), QgsField("motivo", QVariant.String)])
+            self.flagsLayerProvider.addAttributes([QgsField("id", QVariant.Int), QgsField("geomId", QVariant.String)])
             self.flagsLayer.updateFields()
 
         self.flagsLayer.startEditing()
@@ -181,18 +181,18 @@ class StartNotSimple:
 
         listaFeatures = []
         while query.next():
-            motivo = query.value(1) # recebendo valores buscados no sql
-            local = query.value(0) # recebendo valores buscados no sql
-            print motivo
-            print local
+            local = query.value(1) # recebendo valores buscados no sql
+            id = query.value(0) # recebendo valores buscados no sql
+#            print local, id
+#            print local
             flagId = flagCount
 
             flagFeat = QgsFeature()
             flagGeom = QgsGeometry.fromWkt(local) # passa o local onde foi localizado o erro.
             flagFeat.setGeometry(flagGeom)
             flagFeat.initAttributes(2)
-            flagFeat.setAttribute(1,flagId) # insere o id definido para a coluna 0 da layer de memória.
-            flagFeat.setAttribute(0, motivo) # insere o motivo/razão pré-definida para a coluna 1 da layer de memória.
+            flagFeat.setAttribute(0, flagId) # insere o id definido para a coluna 0 da layer de memória.
+            flagFeat.setAttribute(1, id) # insere o motivo/razão pré-definida para a coluna 1 da layer de memória.
 
             listaFeatures.append(flagFeat)    
 
