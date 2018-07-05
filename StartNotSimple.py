@@ -44,9 +44,9 @@ class StartNotSimple:
 
         layer = self.iface.activeLayer() 
 
-        # if not layer:
-        #     self.iface.messageBar().pushMessage("Erro", u"Esperando uma Active Layer!", level=QgsMessageBar.CRITICAL, duration=4)
-        #     return
+        if not layer:
+            self.iface.messageBar().pushMessage("Erro", u"Esperando uma Active Layer!", level=QgsMessageBar.CRITICAL, duration=4)
+            return
         if layer.featureCount() == 0:
             self.iface.messageBar().pushMessage("Erro", u"a camada não possui feições!", level=QgsMessageBar.CRITICAL, duration=4)
             return
@@ -132,7 +132,7 @@ class StartNotSimple:
 
             self.flagsLayer = QgsVectorLayer(tempString, flagsLayerName, "memory")
             self.flagsLayerProvider = self.flagsLayer.dataProvider()
-            self.flagsLayerProvider.addAttributes([QgsField("id", QVariant.Int), QgsField("geomId", QVariant.String)])
+            self.flagsLayerProvider.addAttributes([QgsField("id", QVariant.Int), QgsField("geomId", QVariant.String), QgsField("motivo", QVariant.String)])
             self.flagsLayer.updateFields()
 
         self.flagsLayer.startEditing()
@@ -176,19 +176,22 @@ class StartNotSimple:
 
         listaFeatures = []
         while query.next():
-            local = query.value(1) # recebendo valores buscados no sql
+
+            
             id = query.value(0) # recebendo valores buscados no sql
-#            print local, id
-#            print local
+            local = query.value(1) # recebendo valores buscados no sql
+            motivo = query.value(2)
+            print local, id, motivo
+           
             flagId = flagCount
 
             flagFeat = QgsFeature()
+	    flagFeat.setFields(self.flagsLayer.fields()) # passa quais atributos serão usados.
             flagGeom = QgsGeometry.fromWkt(local) # passa o local onde foi localizado o erro.
             flagFeat.setGeometry(flagGeom)
-            #flagFeat.initAttributes(2)
             flagFeat.setAttribute(0, flagId) # insere o id definido para a coluna 0 da layer de memória.
             flagFeat.setAttribute(1, id) # insere o id da geometria para a coluna 1 da layer de memória.
-
+            flagFeat.setAttribute(2,  u"A geometria não é simples.")
             listaFeatures.append(flagFeat)    
 
             flagCount += 1 # incrementando o contador a cada iteração
@@ -209,8 +212,3 @@ class StartNotSimple:
         else:
             self.iface.messageBar().pushMessage("Erro", u"a geração de flags falhou!", level=QgsMessageBar.CRITICAL, duration=4)
             print query.lastError().text()
-
-
-
-
-
